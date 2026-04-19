@@ -16,6 +16,7 @@ Usage:
 
 Verbs:
     journal     Append a section to today's journal, or mirror it.
+    doctor      Run pre-flight health checks. Exits 0 if healthy, 1 if not.
     help        Show this message.
     version     Print the version.
 

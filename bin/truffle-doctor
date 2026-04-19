@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# truffle-doctor: pre-flight health checks for the truffle CLI.
+# Verifies the environment a heartbeat depends on before it tries to
+# write to it. Exits 0 if everything is healthy, 1 otherwise.
+#
+# Subcommands:
+#     (none)              Run all checks. Print PASS/FAIL per check and a summary.
+#     -q, --quiet         Suppress per-check output. Failures still print to stderr.
+#
+# Env (mirrors truffle-journal):
+#     TRUFFLE_JOURNAL_DIR     Default: $HOME/phantom-config/memory/story
+#     TRUFFLE_STORY_REPO      Default: $HOME/repos/story
+set -euo pipefail
+
+JOURNAL_DIR="${TRUFFLE_JOURNAL_DIR:-${HOME}/phantom-config/memory/story}"
+STORY_REPO="${TRUFFLE_STORY_REPO:-${HOME}/repos/story}"
+
+QUIET=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -q|--quiet) QUIET=1; shift ;;
+        -h|--help)
+            sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *)
+            echo "truffle doctor: unknown arg '$1'" >&2
+            exit 2
+            ;;
+    esac
+done
+
+PASS_COUNT=0
+FAIL_COUNT=0
+
+report() {
+    # report <pass|fail> <label> <detail>
+    local outcome="$1" label="$2" detail="$3"
+    if [ "$outcome" = "pass" ]; then
+        PASS_COUNT=$((PASS_COUNT + 1))
+        if [ "$QUIET" -eq 0 ]; then
+            printf 'PASS  %-44s %s\n' "$label" "$detail"
+        fi
+    else
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        printf 'FAIL  %-44s %s\n' "$label" "$detail" >&2
+    fi
+}
+
+check_journal_dir() {
+    local label="journal directory exists & writable"
+    if [ -d "$JOURNAL_DIR" ] && [ -w "$JOURNAL_DIR" ]; then
+        report pass "$label" "$JOURNAL_DIR"
+    else
+        report fail "$label" "$JOURNAL_DIR"
+    fi
+}
+
+check_story_repo() {
+    local label="mirror repo is a git checkout"
+    if [ -d "$STORY_REPO/.git" ]; then
+        report pass "$label" "$STORY_REPO"
+    else
+        report fail "$label" "$STORY_REPO"
+    fi
+}
+
+check_story_remote() {
+    local label="mirror repo has a remote configured"
+    local remotes=""
+    if [ -d "$STORY_REPO/.git" ]; then
+        remotes="$(git -C "$STORY_REPO" remote 2>/dev/null | head -1 || true)"
+    fi
+    if [ -n "$remotes" ]; then
+        report pass "$label" "$remotes"
+    else
+        report fail "$label" "$STORY_REPO"
+    fi
+}
+
+check_utc_date() {
+    local label="UTC date available"
+    local today
+    if today="$(date -u +%F 2>/dev/null)" && [ -n "$today" ]; then
+        report pass "$label" "$today"
+    else
+        report fail "$label" "(date -u +%F failed)"
+    fi
+}
+
+check_journal_dir
+check_story_repo
+check_story_remote
+check_utc_date
+
+if [ "$QUIET" -eq 0 ]; then
+    echo
+    echo "checks: ${PASS_COUNT} passed, ${FAIL_COUNT} failed"
+fi
+
+[ "$FAIL_COUNT" -eq 0 ]

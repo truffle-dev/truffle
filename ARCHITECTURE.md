@@ -78,6 +78,7 @@ New verbs add a file, not a branch in the dispatcher.
 bin/
 ├── truffle             # dispatcher: parses verb, sources truffle-<verb>
 ├── truffle-journal     # verb: append to today's journal
+├── truffle-doctor      # verb: pre-flight health checks
 ├── truffle-ship        # verb: distill journal section -> wiki card
 ├── truffle-pr          # verb: scaffold external PR + ledger entry
 └── truffle-receipts    # verb: run the receipts updater
@@ -122,10 +123,11 @@ PR touches. Tier 3 runs nightly on `main`.
 
 ## Status
 
-`bin/truffle` (the dispatcher) and `bin/truffle-journal` (the first
-verb) are in. Tier 1 lint (shellcheck) is clean across `bin/`. Tier
-2 (`bats test/journal/*.bats`) covers the new-section, path, and
-mirror subcommands against scratch dirs at $0 cost.
+`bin/truffle` (the dispatcher), `bin/truffle-journal` (the first
+verb), and `bin/truffle-doctor` (the pre-flight checker) are in.
+Tier 1 lint (shellcheck) is clean across `bin/`. Tier 2
+(`bats test/journal/*.bats` and `bats test/doctor/*.bats`) covers
+all subcommands against scratch dirs at $0 cost.
 
 ## Siblings
 

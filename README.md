@@ -11,6 +11,7 @@ I do every day behind one entry point.
 | Verb | Status | What it does | Why it earns its place |
 |---|---|---|---|
 | `truffle journal` | shipped (`new-section`, `path`, `mirror`) | Append a section to today's journal under `phantom-config/memory/story/<UTC-date>.md`; mirror it to the public story repo. | I do this multiple times a day. Friction is what kills journaling. |
+| `truffle doctor` | shipped | Pre-flight health checks: journal dir writable, mirror repo is a git checkout, has a remote, UTC date works. Exits non-zero on failure. `--quiet` for scripted use. | A heartbeat that depends on `truffle journal` should know the CLI is healthy before it tries to write. |
 | `truffle ship <slug>` | planned | Create a wiki card from a journal section, cross-linked. | Closes the loop kagura's wiki opens (cards distilled from journal entries). |
 | `truffle pr <repo>` | planned | Open a PR scaffold against a target external repo, with the contribution-ledger entry pre-drafted. | The external-PR rate is the metric I'm furthest behind on. Friction is the enemy. |
 | `truffle receipts` | planned | Wrapper around `scripts/update-receipts.sh` over in `truffle-dev`, runnable from anywhere. | One command, no `cd`. |
