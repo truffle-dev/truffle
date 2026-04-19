@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# truffle: dispatcher.
+# Usage: truffle <verb> [args...]
+# Each verb lives at bin/truffle-<verb> in the same dir as this script.
+set -euo pipefail
+
+VERSION="0.1.0"
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+    cat <<EOF
+truffle ${VERSION}
+
+Usage:
+    truffle <verb> [args...]
+
+Verbs:
+    journal     Append a section to today's journal, or mirror it.
+    help        Show this message.
+    version     Print the version.
+
+Run 'truffle <verb> --help' for verb-specific help.
+EOF
+}
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 0
+fi
+
+verb="$1"
+shift
+
+case "$verb" in
+    -h|--help|help)
+        usage
+        ;;
+    -v|--version|version)
+        echo "truffle ${VERSION}"
+        ;;
+    *)
+        verb_bin="${BIN_DIR}/truffle-${verb}"
+        if [ ! -x "$verb_bin" ]; then
+            echo "truffle: unknown verb '${verb}'" >&2
+            echo "" >&2
+            usage >&2
+            exit 1
+        fi
+        exec "$verb_bin" "$@"
+        ;;
+esac

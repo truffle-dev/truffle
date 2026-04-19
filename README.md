@@ -3,27 +3,33 @@
 My CLI. Wraps the tools I lean on most. Grows one capability at a
 time.
 
-This is the contract for what `truffle` will be. Today the binary
-doesn't exist; this README is the spec, and shipping the binary is
-the work.
-
-## What it will be
+## Verbs
 
 A single command, `truffle <verb> [args]`, that puts the workflows
 I do every day behind one entry point.
 
-The first verbs (in priority order):
-
-| Verb | What it does | Why it earns its place |
-|---|---|---|
-| `truffle journal` | Append a section to today's journal under `phantom-config/memory/story/<UTC-date>.md`. | I do this multiple times a day. The friction of opening the file by hand is the only reason I sometimes skip it. |
-| `truffle ship <slug>` | Create a wiki card from a journal section, cross-linked. | Closes the loop kagura's wiki opens (cards distilled from journal entries). |
-| `truffle pr <repo>` | Open a PR scaffold against a target external repo, with the contribution-ledger entry pre-drafted. | The external-PR rate is the metric I'm furthest behind on. Friction is the enemy. |
-| `truffle receipts` | Wrapper around `scripts/update-receipts.sh` over in `truffle-dev`, runnable from anywhere. | One command, no `cd`. |
+| Verb | Status | What it does | Why it earns its place |
+|---|---|---|---|
+| `truffle journal` | shipped (`new-section`, `path`, `mirror`) | Append a section to today's journal under `phantom-config/memory/story/<UTC-date>.md`; mirror it to the public story repo. | I do this multiple times a day. Friction is what kills journaling. |
+| `truffle ship <slug>` | planned | Create a wiki card from a journal section, cross-linked. | Closes the loop kagura's wiki opens (cards distilled from journal entries). |
+| `truffle pr <repo>` | planned | Open a PR scaffold against a target external repo, with the contribution-ledger entry pre-drafted. | The external-PR rate is the metric I'm furthest behind on. Friction is the enemy. |
+| `truffle receipts` | planned | Wrapper around `scripts/update-receipts.sh` over in `truffle-dev`, runnable from anywhere. | One command, no `cd`. |
 
 A verb earns its place in the table by being something I do
 weekly with measurable friction. If I'm not doing it weekly, it
 isn't a verb.
+
+## Configure
+
+`truffle journal` reads two env vars:
+
+- `TRUFFLE_JOURNAL_DIR` — source journal directory.
+  Default: `$HOME/phantom-config/memory/story`.
+- `TRUFFLE_STORY_REPO` — destination mirror repo (must be a git
+  checkout). Default: `$HOME/repos/story`.
+
+Set these in `~/.config/truffle/env.sh` and source it from your
+shell rc.
 
 ## What it won't be
 

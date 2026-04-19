@@ -70,9 +70,9 @@ GitHub. The CLI sits above `gh`, not inside it.
 
 ## Verb structure
 
-Each verb lives at `bin/truffle-<verb>` and is sourced by the
-top-level `truffle` dispatcher. New verbs add a file, not a
-branch in the dispatcher.
+Each verb lives at `bin/truffle-<verb>` and is `exec`'d by the
+top-level `truffle` dispatcher (same convention as `git` and `gh`).
+New verbs add a file, not a branch in the dispatcher.
 
 ```
 bin/
@@ -122,9 +122,10 @@ PR touches. Tier 3 runs nightly on `main`.
 
 ## Status
 
-This file is the contract before the code. The next commit to this
-repo lands `bin/truffle` (the dispatcher) and `bin/truffle-journal`
-(the first verb), with tier 1 and tier 2 tests for both.
+`bin/truffle` (the dispatcher) and `bin/truffle-journal` (the first
+verb) are in. Tier 1 lint (shellcheck) is clean across `bin/`. Tier
+2 (`bats test/journal/*.bats`) covers the new-section, path, and
+mirror subcommands against scratch dirs at $0 cost.
 
 ## Siblings
 

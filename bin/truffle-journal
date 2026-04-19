@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# truffle-journal: append a section to today's journal, or mirror it.
+# Subcommands:
+#     new-section <title>     Append a new heartbeat section to today's journal.
+#     path                    Print the path of today's journal file.
+#     mirror [--message MSG]  Copy today's journal into the story repo and push.
+# Env:
+#     TRUFFLE_JOURNAL_DIR     Source journal directory.
+#                             Default: $HOME/phantom-config/memory/story
+#     TRUFFLE_STORY_REPO      Destination mirror repo (must be a git checkout).
+#                             Default: $HOME/repos/story
+set -euo pipefail
+
+JOURNAL_DIR="${TRUFFLE_JOURNAL_DIR:-${HOME}/phantom-config/memory/story}"
+STORY_REPO="${TRUFFLE_STORY_REPO:-${HOME}/repos/story}"
+
+today() { date -u +%F; }
+now_iso() { date -u +%FT%H:%MZ; }
+
+journal_path() {
+    echo "${JOURNAL_DIR}/$(today).md"
+}
+
+usage() {
+    cat <<EOF
+Usage: truffle journal <subcommand> [args]
+
+Subcommands:
+    new-section <title>     Append a new heartbeat section to today's journal.
+                            Creates the file with a date heading if absent.
+                            Prints the journal file path on success.
+    path                    Print the path of today's journal file.
+    mirror [--message MSG]  Copy today's journal into the mirror repo
+                            (TRUFFLE_STORY_REPO), then git add/commit/push.
+                            Skips push if there are no changes.
+
+Env:
+    TRUFFLE_JOURNAL_DIR     ${JOURNAL_DIR}
+    TRUFFLE_STORY_REPO      ${STORY_REPO}
+EOF
+}
+
+cmd_path() {
+    journal_path
+}
+
+cmd_new_section() {
+    if [ $# -lt 1 ] || [ -z "${1:-}" ]; then
+        echo "truffle journal new-section: missing <title>" >&2
+        return 2
+    fi
+    local title="$1"
+    local file
+    file="$(journal_path)"
+    mkdir -p "$(dirname "$file")"
+    if [ ! -f "$file" ]; then
+        printf '# %s\n\n' "$(today)" > "$file"
+    fi
+    if [ -s "$file" ] && [ "$(tail -c 1 "$file")" != $'\n' ]; then
+        printf '\n' >> "$file"
+    fi
+    printf '## Heartbeat %s — %s\n\n' "$(now_iso)" "$title" >> "$file"
+    echo "$file"
+}
+
+cmd_mirror() {
+    local message=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -m|--message)
+                message="${2:-}"
+                shift 2
+                ;;
+            -h|--help)
+                usage
+                return 0
+                ;;
+            *)
+                echo "truffle journal mirror: unknown arg '$1'" >&2
+                return 2
+                ;;
+        esac
+    done
+    local src
+    src="$(journal_path)"
+    if [ ! -f "$src" ]; then
+        echo "truffle journal mirror: nothing to mirror, $src does not exist" >&2
+        return 1
+    fi
+    if [ ! -d "${STORY_REPO}/.git" ]; then
+        echo "truffle journal mirror: ${STORY_REPO} is not a git repo" >&2
+        return 1
+    fi
+    local dest
+    dest="${STORY_REPO}/$(basename "$src")"
+    cp "$src" "$dest"
+    (
+        cd "$STORY_REPO"
+        git add -- "$(basename "$src")"
+        if git diff --cached --quiet; then
+            echo "truffle journal mirror: no changes to commit"
+            return 0
+        fi
+        local msg="${message:-journal: $(today) sync}"
+        git commit -m "$msg" >/dev/null
+        git push >/dev/null 2>&1
+        echo "truffle journal mirror: pushed $(basename "$src") to ${STORY_REPO}"
+    )
+}
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 0
+fi
+
+sub="$1"
+shift
+
+case "$sub" in
+    -h|--help|help)
+        usage
+        ;;
+    path)
+        cmd_path "$@"
+        ;;
+    new-section)
+        cmd_new_section "$@"
+        ;;
+    mirror)
+        cmd_mirror "$@"
+        ;;
+    *)
+        echo "truffle journal: unknown subcommand '$sub'" >&2
+        echo "" >&2
+        usage >&2
+        exit 1
+        ;;
+esac
