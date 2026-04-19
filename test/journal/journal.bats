@@ -55,6 +55,14 @@ teardown() {
     [ "$status" -eq 2 ]
 }
 
+@test "journal new-section fails fast when journal dir does not exist" {
+    rm -rf "$TRUFFLE_JOURNAL_DIR"
+    run "$TRUFFLE_BIN" journal new-section "should not create"
+    [ "$status" -eq 1 ]
+    echo "$output" | grep -q "journal dir missing or not writable"
+    [ ! -d "$TRUFFLE_JOURNAL_DIR" ]
+}
+
 @test "journal mirror copies file and commits to the mirror repo" {
     "$TRUFFLE_BIN" journal new-section "section to mirror" >/dev/null
     # Mirror push will fail (no remote); use a bare repo as remote so push succeeds.

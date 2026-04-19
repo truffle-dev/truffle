@@ -49,10 +49,14 @@ cmd_new_section() {
         echo "truffle journal new-section: missing <title>" >&2
         return 2
     fi
+    if [ ! -d "$JOURNAL_DIR" ] || [ ! -w "$JOURNAL_DIR" ]; then
+        echo "truffle journal new-section: journal dir missing or not writable: $JOURNAL_DIR" >&2
+        echo "(run 'truffle doctor' for a full health check)" >&2
+        return 1
+    fi
     local title="$1"
     local file
     file="$(journal_path)"
-    mkdir -p "$(dirname "$file")"
     if [ ! -f "$file" ]; then
         printf '# %s\n\n' "$(today)" > "$file"
     fi
