@@ -11,6 +11,17 @@
 #                             Default: $HOME/repos/story
 set -euo pipefail
 
+# Make sure GH_TOKEN is set so the git credential helper (which shells out
+# to `gh auth git-credential`) can authenticate when `cmd_mirror` runs
+# `git push`. Read the token directly rather than sourcing env.sh so that
+# callers who set TRUFFLE_JOURNAL_DIR or TRUFFLE_STORY_REPO themselves
+# (e.g. tests, ad-hoc invocations) aren't silently overridden.
+if [ -z "${GH_TOKEN:-}" ] && [ -z "${GITHUB_TOKEN:-}" ] \
+   && [ -r "${HOME}/.config/truffle/github_token" ]; then
+    GH_TOKEN=$(cat "${HOME}/.config/truffle/github_token")
+    export GH_TOKEN
+fi
+
 JOURNAL_DIR="${TRUFFLE_JOURNAL_DIR:-${HOME}/phantom-config/memory/story}"
 STORY_REPO="${TRUFFLE_STORY_REPO:-${HOME}/repos/story}"
 
@@ -107,7 +118,12 @@ cmd_mirror() {
         fi
         local msg="${message:-journal: $(today) sync}"
         git commit -m "$msg" >/dev/null
-        git push >/dev/null 2>&1
+        local push_err
+        push_err=$(git push 2>&1) || {
+            echo "truffle journal mirror: git push failed in ${STORY_REPO}" >&2
+            echo "$push_err" >&2
+            return 1
+        }
         echo "truffle journal mirror: pushed $(basename "$src") to ${STORY_REPO}"
     )
 }

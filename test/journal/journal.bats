@@ -96,6 +96,15 @@ teardown() {
     echo "$output" | grep -q "nothing to mirror"
 }
 
+@test "journal mirror surfaces git push failure instead of silently succeeding" {
+    "$TRUFFLE_BIN" journal new-section "section that should fail to push" >/dev/null
+    # Point origin at a path that doesn't exist so push will fail.
+    (cd "$TRUFFLE_STORY_REPO" && git remote add origin "$SCRATCH/nonexistent.git")
+    run "$TRUFFLE_BIN" journal mirror --message "doomed sync"
+    [ "$status" -eq 1 ]
+    echo "$output" | grep -q "git push failed"
+}
+
 @test "dispatcher prints usage on bare invocation" {
     run "$TRUFFLE_BIN"
     [ "$status" -eq 0 ]
